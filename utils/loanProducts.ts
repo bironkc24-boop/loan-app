@@ -1,0 +1,40 @@
+import { LoanProduct } from '../types';
+
+export const loanProducts: LoanProduct[] = [
+  {
+    id: '1',
+    name: 'Personal Loan',
+    type: 'personal',
+    minAmount: 1000,
+    maxAmount: 50000,
+    interestRate: 8.5,
+    minTerm: 6,
+    maxTerm: 60,
+    description: 'Quick personal loans for any purpose with flexible terms',
+    icon: '💰',
+  },
+  {
+    id: '2',
+    name: 'Business Loan',
+    type: 'business',
+    minAmount: 5000,
+    maxAmount: 500000,
+    interestRate: 6.5,
+    minTerm: 12,
+    maxTerm: 120,
+    description: 'Grow your business with competitive business financing',
+    icon: '🏢',
+  },
+  {
+    id: '3',
+    name: 'Education Loan',
+    type: 'education',
+    minAmount: 2000,
+    maxAmount: 100000,
+    interestRate: 4.5,
+    minTerm: 12,
+    maxTerm: 180,
+    description: 'Invest in your future with low-interest education loans',
+    icon: '🎓',
+  },
+];
