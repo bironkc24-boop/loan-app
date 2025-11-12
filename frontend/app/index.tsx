@@ -10,6 +10,7 @@ import {
 import { router } from 'expo-router';
 import { loanProducts } from '../utils/loanProducts';
 import { LoanProduct } from '../types';
+import { formatCurrency } from '../utils/loanCalculator';
 
 export default function HomeScreen() {
   const renderLoanProduct = ({ item }: { item: LoanProduct }) => (
@@ -28,7 +29,7 @@ export default function HomeScreen() {
             Rate: {item.interestRate}% APR
           </Text>
           <Text style={styles.detailText}>
-            Up to ₱{item.maxAmount.toLocaleString()}
+            Up to {formatCurrency(item.maxAmount)}
           </Text>
         </View>
       </View>

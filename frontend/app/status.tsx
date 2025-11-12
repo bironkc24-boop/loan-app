@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { formatCurrency } from '../utils/loanCalculator';
 
 interface Loan {
   id: string;
@@ -131,7 +132,7 @@ export default function StatusScreen() {
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Loan Amount</Text>
           <Text style={styles.detailValue}>
-            ${item.amount.toLocaleString()}
+            {formatCurrency(item.amount)}
           </Text>
         </View>
         <View style={styles.detailRow}>

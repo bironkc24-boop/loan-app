@@ -87,7 +87,7 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Phone Number</Text>
           <TextInput
             style={styles.input}
-            placeholder="+1 (234) 567-8900"
+            placeholder="+63 912 345 6789"
             placeholderTextColor="#9CA3AF"
             value={phone}
             onChangeText={setPhone}

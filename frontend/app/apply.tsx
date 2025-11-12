@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { loanProducts } from '../utils/loanProducts';
+import { formatCurrency } from '../utils/loanCalculator';
 
 export default function ApplyScreen() {
   const { user, isLoading: authLoading } = useAuth();
@@ -64,7 +65,7 @@ export default function ApplyScreen() {
     const loanTerm = parseInt(term);
 
     if (loanAmount < selectedProduct.minAmount || loanAmount > selectedProduct.maxAmount) {
-      Alert.alert('Error', `Loan amount must be between $${selectedProduct.minAmount} and $${selectedProduct.maxAmount}`);
+      Alert.alert('Error', `Loan amount must be between ${formatCurrency(selectedProduct.minAmount)} and ${formatCurrency(selectedProduct.maxAmount)}`);
       return;
     }
 
@@ -149,7 +150,7 @@ export default function ApplyScreen() {
           style={styles.input}
           value={amount}
           onChangeText={setAmount}
-          placeholder={`$${selectedProduct.minAmount} - $${selectedProduct.maxAmount}`}
+          placeholder={`${formatCurrency(selectedProduct.minAmount)} - ${formatCurrency(selectedProduct.maxAmount)}`}
           keyboardType="numeric"
         />
 
@@ -181,7 +182,7 @@ export default function ApplyScreen() {
           style={styles.input}
           value={monthlyIncome}
           onChangeText={setMonthlyIncome}
-          placeholder="$5000"
+          placeholder={formatCurrency(50000)}
           keyboardType="numeric"
         />
 

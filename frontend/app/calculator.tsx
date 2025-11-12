@@ -50,7 +50,7 @@ export default function CalculatorScreen() {
         <View style={styles.inputContainer}>
           <Text style={styles.inputLabel}>Loan Amount</Text>
           <View style={styles.inputWrapper}>
-            <Text style={styles.currencySymbol}>$</Text>
+            <Text style={styles.currencySymbol}>₱</Text>
             <TextInput
               style={styles.input}
               value={amount}

@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { formatCurrency } from '../utils/loanCalculator';
 
 interface Loan {
   id: string;
@@ -186,7 +187,7 @@ export default function AdminDashboard() {
       <View style={styles.cardBody}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Amount:</Text>
-          <Text style={styles.detailValue}>${loan.amount.toLocaleString()}</Text>
+          <Text style={styles.detailValue}>{formatCurrency(loan.amount)}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Term:</Text>
@@ -302,7 +303,7 @@ export default function AdminDashboard() {
         </View>
         <View style={styles.metricCard}>
           <Text style={styles.metricValue}>
-            ${(metrics.total_disbursed || 0).toLocaleString()}
+            {formatCurrency(metrics.total_disbursed || 0)}
           </Text>
           <Text style={styles.metricLabel}>Total Disbursed</Text>
         </View>
@@ -416,7 +417,7 @@ export default function AdminDashboard() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Update Loan Status</Text>
             <Text style={styles.modalSubtitle}>
-              Loan Amount: ${selectedLoan?.amount.toLocaleString()}
+              Loan Amount: {selectedLoan ? formatCurrency(selectedLoan.amount) : ''}
             </Text>
 
             <TouchableOpacity

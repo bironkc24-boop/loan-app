@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { api } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { formatCurrency } from '../utils/loanCalculator';
 
 interface Assignment {
   id: string;
@@ -153,7 +154,7 @@ export default function RiderPortal() {
         <View style={styles.cardBody}>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Loan Amount:</Text>
-            <Text style={styles.detailValue}>${loan.amount.toLocaleString()}</Text>
+            <Text style={styles.detailValue}>{formatCurrency(loan.amount)}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Loan Type:</Text>
