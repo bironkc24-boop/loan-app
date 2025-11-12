@@ -1,5 +1,5 @@
 # QuickLoan Setup Guide
-
+##
 ## 🎉 What's Been Built
 
 I've successfully transformed your simple loan app into a **comprehensive full-stack PERN + Supabase loan management system** with multi-role authentication. Here's what's complete:
