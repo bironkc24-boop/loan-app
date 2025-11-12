@@ -7,23 +7,24 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { saveApplication } from '../utils/storage';
-import { LoanApplication } from '../types';
+import { api } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 import { loanProducts } from '../utils/loanProducts';
 
 export default function ApplyScreen() {
+  const { user, isLoading: authLoading } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState(loanProducts[0]);
   const [amount, setAmount] = useState('');
   const [term, setTerm] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [employmentStatus, setEmploymentStatus] = useState('');
   const [documents, setDocuments] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const pickDocument = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -46,29 +47,43 @@ export default function ApplyScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!fullName || !email || !phone || !amount || !term || !monthlyIncome || !employmentStatus) {
+    if (!user) {
+      Alert.alert('Authentication Required', 'Please sign in to apply for a loan', [
+        { text: 'Sign In', onPress: () => router.push('/login') },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+      return;
+    }
+
+    if (!amount || !term || !purpose || !monthlyIncome || !employmentStatus) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
-    const application: LoanApplication = {
-      id: Date.now().toString(),
-      productId: selectedProduct.id,
-      productName: selectedProduct.name,
-      amount: parseFloat(amount),
-      term: parseInt(term),
-      status: 'pending',
-      applicantName: fullName,
-      email,
-      phone,
-      monthlyIncome: parseFloat(monthlyIncome),
-      employmentStatus,
-      dateApplied: new Date().toISOString(),
-      documents,
-    };
+    const loanAmount = parseFloat(amount);
+    const loanTerm = parseInt(term);
 
+    if (loanAmount < selectedProduct.minAmount || loanAmount > selectedProduct.maxAmount) {
+      Alert.alert('Error', `Loan amount must be between $${selectedProduct.minAmount} and $${selectedProduct.maxAmount}`);
+      return;
+    }
+
+    if (loanTerm < selectedProduct.minTerm || loanTerm > selectedProduct.maxTerm) {
+      Alert.alert('Error', `Loan term must be between ${selectedProduct.minTerm} and ${selectedProduct.maxTerm} months`);
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await saveApplication(application);
+      await api.post('/loans', {
+        amount: loanAmount,
+        term_months: loanTerm,
+        purpose,
+        loan_type: selectedProduct.id,
+        monthly_income: parseFloat(monthlyIncome),
+        employment_status: employmentStatus,
+      });
+
       Alert.alert(
         'Application Submitted!',
         'Your loan application has been submitted successfully. You can track its status in the Status tab.',
@@ -82,14 +97,14 @@ export default function ApplyScreen() {
       
       setAmount('');
       setTerm('');
-      setFullName('');
-      setEmail('');
-      setPhone('');
+      setPurpose('');
       setMonthlyIncome('');
       setEmploymentStatus('');
       setDocuments([]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit application. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -146,36 +161,15 @@ export default function ApplyScreen() {
           placeholder={`${selectedProduct.minTerm} - ${selectedProduct.maxTerm} months`}
           keyboardType="numeric"
         />
-      </View>
 
-      <View style={styles.formSection}>
-        <Text style={styles.sectionTitle}>Personal Information</Text>
-
-        <Text style={styles.label}>Full Name *</Text>
+        <Text style={styles.label}>Purpose *</Text>
         <TextInput
           style={styles.input}
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder="John Doe"
-        />
-
-        <Text style={styles.label}>Email Address *</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="john@example.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <Text style={styles.label}>Phone Number *</Text>
-        <TextInput
-          style={styles.input}
-          value={phone}
-          onChangeText={setPhone}
-          placeholder="+1 234 567 8900"
-          keyboardType="phone-pad"
+          value={purpose}
+          onChangeText={setPurpose}
+          placeholder="e.g., Business expansion, Education, Home renovation"
+          multiline
+          numberOfLines={3}
         />
       </View>
 
@@ -220,8 +214,16 @@ export default function ApplyScreen() {
         )}
       </View>
 
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Submit Application</Text>
+      <TouchableOpacity 
+        style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]} 
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.submitButtonText}>Submit Application</Text>
+        )}
       </TouchableOpacity>
 
       <View style={styles.disclaimer}>
@@ -358,6 +360,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#A5B4FC',
   },
   disclaimer: {
     marginHorizontal: 16,

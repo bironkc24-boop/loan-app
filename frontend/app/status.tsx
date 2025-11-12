@@ -6,37 +6,67 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { getApplications } from '../utils/storage';
-import { LoanApplication } from '../types';
+import { router } from 'expo-router';
+import { api } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+
+interface Loan {
+  id: string;
+  amount: number;
+  term_months: number;
+  status: string;
+  purpose: string;
+  loan_type: string;
+  created_at: string;
+}
 
 export default function StatusScreen() {
-  const [applications, setApplications] = useState<LoanApplication[]>([]);
+  const { user, isLoading: authLoading } = useAuth();
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const loadApplications = async () => {
-    const apps = await getApplications();
-    setApplications(apps.sort((a, b) => 
-      new Date(b.dateApplied).getTime() - new Date(a.dateApplied).getTime()
-    ));
+  const loadLoans = async () => {
+    if (!user) {
+      setLoans([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await api.get('/loans');
+      setLoans(data.loans || []);
+    } catch (error: any) {
+      Alert.alert('Error', 'Failed to load loans. Please try again.');
+      console.error('Error loading loans:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadApplications();
-  }, []);
+    if (!authLoading) {
+      loadLoans();
+    }
+  }, [user, authLoading]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadApplications();
+    await loadLoans();
     setRefreshing(false);
   };
 
-  const getStatusColor = (status: LoanApplication['status']) => {
-    switch (status) {
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
       case 'approved':
+      case 'disbursed':
         return '#10B981';
       case 'rejected':
         return '#EF4444';
+      case 'under_review':
       case 'reviewing':
         return '#F59E0B';
       default:
@@ -44,17 +74,28 @@ export default function StatusScreen() {
     }
   };
 
-  const getStatusIcon = (status: LoanApplication['status']) => {
-    switch (status) {
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
       case 'approved':
+      case 'disbursed':
         return '✓';
       case 'rejected':
         return '✕';
+      case 'under_review':
       case 'reviewing':
         return '⟳';
       default:
         return '⋯';
     }
+  };
+
+  const getLoanTypeName = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'personal': 'Personal Loan',
+      'business': 'Business Loan',
+      'education': 'Education Loan',
+    };
+    return typeMap[type] || type;
   };
 
   const formatDate = (dateString: string) => {
@@ -66,12 +107,12 @@ export default function StatusScreen() {
     });
   };
 
-  const renderApplication = ({ item }: { item: LoanApplication }) => (
+  const renderLoan = ({ item }: { item: Loan }) => (
     <View style={styles.applicationCard}>
       <View style={styles.cardHeader}>
         <View>
-          <Text style={styles.productName}>{item.productName}</Text>
-          <Text style={styles.dateText}>{formatDate(item.dateApplied)}</Text>
+          <Text style={styles.productName}>{getLoanTypeName(item.loan_type)}</Text>
+          <Text style={styles.dateText}>{formatDate(item.created_at)}</Text>
         </View>
         <View
           style={[
@@ -81,7 +122,7 @@ export default function StatusScreen() {
         >
           <Text style={styles.statusIcon}>{getStatusIcon(item.status)}</Text>
           <Text style={styles.statusText}>
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            {item.status.replace('_', ' ').charAt(0).toUpperCase() + item.status.replace('_', ' ').slice(1)}
           </Text>
         </View>
       </View>
@@ -95,11 +136,11 @@ export default function StatusScreen() {
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Term</Text>
-          <Text style={styles.detailValue}>{item.term} months</Text>
+          <Text style={styles.detailValue}>{item.term_months} months</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Application ID</Text>
-          <Text style={styles.detailValue}>#{item.id}</Text>
+          <Text style={styles.detailLabel}>Purpose</Text>
+          <Text style={styles.detailValue}>{item.purpose}</Text>
         </View>
       </View>
 
@@ -111,7 +152,7 @@ export default function StatusScreen() {
         </View>
       )}
 
-      {item.status === 'reviewing' && (
+      {item.status === 'under_review' && (
         <View style={[styles.cardFooter, { backgroundColor: '#FEF3C7' }]}>
           <Text style={[styles.footerText, { color: '#92400E' }]}>
             📋 Under review - We may contact you for additional information
@@ -137,28 +178,61 @@ export default function StatusScreen() {
     </View>
   );
 
+  if (authLoading || loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text style={styles.loadingText}>Loading loans...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyIcon}>🔒</Text>
+        <Text style={styles.emptyTitle}>Sign In Required</Text>
+        <Text style={styles.emptyText}>
+          Please sign in to view your loan applications
+        </Text>
+        <TouchableOpacity
+          style={styles.signInButton}
+          onPress={() => router.push('/login')}
+        >
+          <Text style={styles.signInButtonText}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Application Status</Text>
+        <Text style={styles.headerTitle}>My Loan Applications</Text>
         <Text style={styles.headerSubtitle}>
-          Track your loan applications
+          Track the status of your loan applications
         </Text>
       </View>
 
-      {applications.length === 0 ? (
+      {loans.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyTitle}>No Applications Yet</Text>
           <Text style={styles.emptyText}>
-            You haven't submitted any loan applications. Visit the Apply tab to
-            get started!
+            You haven't submitted any loan applications yet. Start your journey by
+            applying for a loan!
           </Text>
+          <TouchableOpacity
+            style={styles.applyButton}
+            onPress={() => router.push('/apply')}
+          >
+            <Text style={styles.applyButtonText}>Apply for a Loan</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={applications}
-          renderItem={renderApplication}
+          data={loans}
+          renderItem={renderLoan}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           refreshControl={
@@ -286,5 +360,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  signInButton: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  signInButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  applyButton: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  applyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
