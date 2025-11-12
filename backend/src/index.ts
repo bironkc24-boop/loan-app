@@ -60,7 +60,7 @@ app.use('/api/rider', riderRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = config.port;
+const PORT = typeof config.port === 'string' ? parseInt(config.port) : config.port;
 const HOST = 'localhost';
 
 app.listen(PORT, HOST, () => {
