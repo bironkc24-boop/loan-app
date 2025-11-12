@@ -58,6 +58,6 @@ localPort = 33575
 externalPort = 3000
 
 [deployment]
-deploymentTarget = "vm"
-run = ["bash", "-c", "cd backend && npm start & cd frontend && npm run web"]
-build = ["bash", "-c", "cd backend && npm run build"]
+deploymentTarget = "autoscale"
+run = ["bash", "-c", "cd backend && node dist/index.js & cd frontend && npx serve -s web-build -l 5000"]
+build = ["npm", "run", "backend:build"]
