@@ -102,7 +102,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/auth/register`, {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+    
+    const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -2,17 +2,18 @@ import { supabase } from './supabase';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-async function getAuthHeaders() {
+async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
   
-  if (!session) {
-    return {};
-  }
-
-  return {
-    'Authorization': `Bearer ${session.access_token}`,
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  if (session?.access_token) {
+    headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
+
+  return headers;
 }
 
 export const api = {
