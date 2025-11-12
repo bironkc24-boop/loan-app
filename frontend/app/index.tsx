@@ -28,7 +28,7 @@ export default function HomeScreen() {
             Rate: {item.interestRate}% APR
           </Text>
           <Text style={styles.detailText}>
-            Up to ${item.maxAmount.toLocaleString()}
+            Up to ₱{item.maxAmount.toLocaleString()}
           </Text>
         </View>
       </View>
@@ -46,7 +46,7 @@ export default function HomeScreen() {
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-          <Text style={styles.statValue}>$500M+</Text>
+          <Text style={styles.statValue}>₱25B+</Text>
           <Text style={styles.statLabel}>Loans Disbursed</Text>
         </View>
         <View style={styles.statBox}>
