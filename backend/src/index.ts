@@ -61,9 +61,10 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = config.port;
+const HOST = 'localhost';
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on ${HOST}:${PORT}`);
   console.log(`📝 Environment: ${config.nodeEnv}`);
   console.log(`🔒 CORS enabled for: ${config.frontendUrl}`);
 });
