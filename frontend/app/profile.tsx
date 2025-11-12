@@ -105,7 +105,7 @@ export default function ProfileScreen() {
         {hasRole('admin') && (
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => Alert.alert('Admin Dashboard', 'Admin dashboard coming soon!')}
+            onPress={() => router.push('/admin')}
           >
             <Ionicons name="shield" size={24} color="#4F46E5" />
             <Text style={styles.menuItemText}>Admin Dashboard</Text>
@@ -116,7 +116,7 @@ export default function ProfileScreen() {
         {hasRole('rider') && (
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => Alert.alert('Rider Portal', 'Rider portal coming soon!')}
+            onPress={() => router.push('/rider')}
           >
             <Ionicons name="bicycle" size={24} color="#4F46E5" />
             <Text style={styles.menuItemText}>Rider Portal</Text>

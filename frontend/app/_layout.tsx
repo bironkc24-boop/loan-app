@@ -87,6 +87,18 @@ export default function Layout() {
             href: null,
           }}
         />
+        <Tabs.Screen
+          name="admin"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="rider"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
     </AuthProvider>
   );
