@@ -53,12 +53,21 @@ backend/src/
 - `POST /login` - Login and receive JWT token
 - `POST /logout` - Invalidate session
 - `GET /me` - Get current user profile with roles
+- `POST /forgot-password` - Request password reset email ✨
+- `POST /reset-password` - Reset password with access token ✨
+- `POST /refresh` - Refresh JWT access token ✨
 
 **Borrower Loans** (`/api/loans/`)
 - `POST /` - Create new loan application
 - `GET /` - Get all loans for current borrower
-- `GET /:id` - Get specific loan details
+- `GET /:id` - Get specific loan details with status history
+- `GET /:id/status-history` - Get loan status change history ✨
 - `POST /:id/documents` - Upload loan documents
+
+**User Profile** (`/api/users/`) ✨
+- `GET /me` - Get current user profile
+- `PUT /me` - Update user profile (full_name, phone, address, etc.)
+- `GET /:id` - Get user by ID (admin access)
 
 **Admin Operations** (`/api/admin/`)
 - `GET /loans` - View all loans (filterable)
@@ -66,13 +75,23 @@ backend/src/
 - `POST /loans/:id/assign` - Assign rider to loan
 - `GET /riders` - List all riders
 - `POST /riders` - Create new rider account
+- `PUT /riders/:id` - Update rider details (zone, status, max_assignments) ✨
+- `DELETE /riders/:id` - Deactivate rider ✨
+- `GET /users` - List all system users ✨
 - `GET /metrics` - System-wide analytics
 
 **Rider Operations** (`/api/rider/`)
 - `GET /assignments` - Get assigned loan verifications
 - `PUT /assignments/:id/status` - Update assignment status
+- `POST /assignments/:id/notes` - Add timestamped notes to assignment ✨
 - `PUT /availability` - Set active/inactive status
 - `GET /metrics` - Personal performance metrics
+
+**Notifications** (`/api/notifications/`) ✨
+- `GET /` - Get all notifications for current user
+- `PUT /:id/read` - Mark notification as read
+- `PUT /read-all` - Mark all notifications as read
+- `POST /` - Create notification (admin only)
 
 #### Security Features
 ✅ **Row Level Security (RLS)** - Database-level access control  
@@ -123,6 +142,15 @@ frontend/
 **Home Screen (`index.tsx`)**
 - Welcome banner
 - Key statistics display (₱25B+ disbursed, 50K+ customers)
+
+**Notifications Screen (`notifications.tsx`)** ✨
+- Tab navigation (All, Unread, Read)
+- Real-time notification feed
+- Pull-to-refresh functionality
+- Mark as read/unread
+- Mark all as read
+- Icon-based notification types (loan status, rider, payment, system)
+- Color-coded by type
 - Loan product cards (Personal, Business, Education)
 - Navigation to calculator and apply screens
 
