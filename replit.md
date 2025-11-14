@@ -37,7 +37,15 @@ QuickLoan is a comprehensive full-stack loan management system built with:
   - Profile screen with user management
   - Admin Dashboard for loan management
   - Rider Portal for field verification
+  - Terms of Service & Privacy Policy screen
+  - Forgot Password screen with email reset flow
 - **Design**: Beautiful indigo/purple theme (#4F46E5) maintained throughout
+- **Terms & Conditions Acceptance**:
+  - Complete terms acceptance system with version tracking (TERMS_VERSION constant)
+  - Separate Terms of Service and Privacy Policy documents
+  - Checkbox validation during registration
+  - Backend validates and stores acceptance timestamp and version
+  - Proper UX: checkbox and document links are separate (users can read terms without toggling acceptance)
 
 ### ⏳ Required Setup Steps - NEXT ACTIONS
 
@@ -102,6 +110,7 @@ quickloan/
    - Upload documents
    - Track loan status
    - View loan history
+   - Accept Terms of Service and Privacy Policy during registration
 
 2. **Admin**:
    - Review loan applications
@@ -115,6 +124,13 @@ quickloan/
    - Update verification status
    - Upload verification documents
    - Manage availability
+
+### Authentication Features
+- User registration with terms acceptance
+- Login with email/password
+- Forgot password flow with email reset
+- JWT token-based authentication
+- Terms of Service and Privacy Policy with version tracking
 
 ### API Endpoints
 
@@ -169,6 +185,22 @@ EXPO_PUBLIC_API_URL=https://<replit-domain>:3001/api
 None set yet.
 
 ## Recent Changes
+
+- **2025-11-14**: Terms & Conditions and Forgot Password Implementation
+  - **Terms & Conditions System**:
+    - Added `accepted_terms_at` and `terms_version` fields to users table in schema.sql
+    - Created comprehensive Terms of Service and Privacy Policy content files
+    - Built dedicated Terms screen with tab navigation (Terms/Privacy)
+    - Updated registration with terms acceptance checkbox
+    - Backend validates terms acceptance and stores timestamp + version
+    - Implemented single source of truth using TERMS_VERSION constant
+    - Fixed critical UX issue: separated checkbox from document links (users can now read terms without toggling acceptance)
+  - **Forgot Password Flow**:
+    - Created forgot password screen with email validation
+    - Integrated with existing backend password reset endpoint
+    - Added "Forgot Password?" link to login screen
+    - Complete email reset flow with proper error handling
+  - All changes architect-reviewed and approved
 
 - **2025-11-12**: Complete Philippines market localization
   - Converted all currency from USD to Philippine Peso (₱)
