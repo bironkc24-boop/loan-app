@@ -33,6 +33,12 @@ export default function Layout() {
         <Tabs.Screen
           name="index"
           options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="home"
+          options={{
             title: 'Home',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" size={size} color={color} />
