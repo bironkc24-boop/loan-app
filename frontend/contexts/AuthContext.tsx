@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
+import { TERMS_VERSION } from '../constants/termsOfService';
 
 interface UserProfile extends User {
   roles?: string[];
@@ -114,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
         full_name: fullName,
         phone,
+        accepted_terms: true,
+        terms_version: TERMS_VERSION,
       }),
     });
 

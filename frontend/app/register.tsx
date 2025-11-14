@@ -9,8 +9,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { TERMS_VERSION } from '../constants/termsOfService';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -18,6 +20,7 @@ export default function RegisterScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signUp } = useAuth();
 
@@ -34,6 +37,11 @@ export default function RegisterScreen() {
 
     if (password.length < 6) {
       Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      Alert.alert('Error', 'You must accept the Terms of Service and Privacy Policy to continue');
       return;
     }
 
@@ -122,6 +130,45 @@ export default function RegisterScreen() {
           />
         </View>
 
+        <View style={styles.termsCheckbox}>
+          <TouchableOpacity
+            style={styles.checkboxButton}
+            onPress={() => setAcceptedTerms(!acceptedTerms)}
+            disabled={isLoading}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, acceptedTerms && styles.checkboxChecked]}>
+              {acceptedTerms && (
+                <Ionicons name="checkmark" size={18} color="#FFFFFF" />
+              )}
+            </View>
+          </TouchableOpacity>
+          <View style={styles.termsTextContainer}>
+            <Text style={styles.termsText}>
+              I accept the{' '}
+              <Text
+                style={styles.termsLink}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  router.push('/terms');
+                }}
+              >
+                Terms of Service
+              </Text>{' '}
+              and{' '}
+              <Text
+                style={styles.termsLink}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  router.push('/terms');
+                }}
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+          </View>
+        </View>
+
         <TouchableOpacity
           style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
           onPress={handleRegister}
@@ -133,14 +180,6 @@ export default function RegisterScreen() {
             <Text style={styles.registerButtonText}>Create Account</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.terms}>
-          <Text style={styles.termsText}>
-            By creating an account, you agree to our{' '}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-            <Text style={styles.termsLink}>Privacy Policy</Text>
-          </Text>
-        </View>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
@@ -230,18 +269,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  termsCheckbox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginVertical: 16,
+  },
+  checkboxButton: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  termsTextContainer: {
+    flex: 1,
+  },
   terms: {
     marginTop: 16,
     alignItems: 'center',
   },
   termsText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6B7280',
-    textAlign: 'center',
+    lineHeight: 20,
   },
   termsLink: {
     color: '#4F46E5',
     fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   divider: {
     flexDirection: 'row',

@@ -108,6 +108,18 @@ export default function Layout() {
             href: null,
           }}
         />
+        <Tabs.Screen
+          name="terms"
+          options={{
+            href: null,
+          }}
+        />
+        <Tabs.Screen
+          name="forgot-password"
+          options={{
+            href: null,
+          }}
+        />
       </Tabs>
     </AuthProvider>
   );

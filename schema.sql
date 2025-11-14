@@ -28,6 +28,8 @@ CREATE TABLE users (
     full_name VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     avatar_url TEXT,
+    accepted_terms_at TIMESTAMP WITH TIME ZONE,
+    terms_version VARCHAR(20) DEFAULT '1.0',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

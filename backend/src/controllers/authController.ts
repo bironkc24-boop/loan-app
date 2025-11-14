@@ -5,10 +5,14 @@ import { AuthRequest } from '../middleware/auth';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, full_name, phone } = req.body;
+    const { email, password, full_name, phone, accepted_terms, terms_version } = req.body;
 
     if (!email || !password || !full_name) {
       throw new AppError('Email, password, and full name are required', 400);
+    }
+
+    if (!accepted_terms) {
+      throw new AppError('You must accept the Terms of Service and Privacy Policy', 400);
     }
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -24,13 +28,15 @@ export const register = async (req: Request, res: Response) => {
       throw new AppError('Failed to create user', 500);
     }
 
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError} = await supabase
       .from('users')
       .insert([
         {
           id: authData.user.id,
           full_name,
           phone: phone || null,
+          accepted_terms_at: new Date().toISOString(),
+          terms_version: terms_version,
         }
       ])
       .select()
