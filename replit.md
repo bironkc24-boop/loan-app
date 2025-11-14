@@ -29,6 +29,7 @@ QuickLoan is a comprehensive full-stack loan management system built with:
   - Realistic Philippine loan amounts (Personal: ₱10k-500k, Business: ₱50k-5M, Education: ₱20k-1M)
   - Philippine phone number format (+63)
 - **All Screens Complete**:
+  - **Splash Screen** with animated branding and "tap anywhere to continue"
   - Login & Register with beautiful modern UI
   - Home screen with loan products
   - Loan Calculator with Philippine Peso
@@ -186,7 +187,13 @@ None set yet.
 
 ## Recent Changes
 
-- **2025-11-14**: Terms & Conditions and Forgot Password Implementation
+- **2025-11-14**: Splash Screen, Terms & Conditions, and Forgot Password
+  - **Splash Screen**:
+    - Created beautiful animated splash screen as app entry point
+    - Features QuickLoan branding with wallet icon and pulsing animations
+    - Displays three key features: Quick Approval, 100% Secure, Flexible Terms
+    - "Tap anywhere to continue" UX - redirects to login (new users) or home (logged in users)
+    - Maintains indigo/purple theme (#4F46E5) with Philippine branding
   - **Terms & Conditions System**:
     - Added `accepted_terms_at` and `terms_version` fields to users table in schema.sql
     - Created comprehensive Terms of Service and Privacy Policy content files
