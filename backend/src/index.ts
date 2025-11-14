@@ -9,6 +9,8 @@ import authRoutes from './routes/auth';
 import loanRoutes from './routes/loans';
 import adminRoutes from './routes/admin';
 import riderRoutes from './routes/rider';
+import notificationRoutes from './routes/notifications';
+import userRoutes from './routes/users';
 
 const app = express();
 
@@ -53,9 +55,11 @@ app.get('/api', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/loans', loanRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rider', riderRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

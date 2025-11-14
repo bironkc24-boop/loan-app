@@ -136,6 +136,46 @@ export const getLoanById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getLoanStatusHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user) {
+      throw new AppError('Not authenticated', 401);
+    }
+
+    const { data: loan } = await supabase
+      .from('loans')
+      .select('id, borrower_id')
+      .eq('id', id)
+      .single();
+
+    const isAdmin = req.user.roles.includes('admin');
+    if (!loan || (!isAdmin && loan.borrower_id !== req.user.id)) {
+      throw new AppError('Loan not found or access denied', 404);
+    }
+
+    const { data: history, error } = await supabase
+      .from('loan_status_history')
+      .select('*')
+      .eq('loan_id', id)
+      .order('changed_at', { ascending: false });
+
+    if (error) {
+      throw new AppError('Failed to fetch loan status history', 500);
+    }
+
+    res.json({ history: history || [] });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Get loan status history error:', error);
+      res.status(500).json({ error: 'Failed to fetch loan status history' });
+    }
+  }
+};
+
 export const uploadLoanDocument = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {

@@ -10,6 +10,7 @@ router.use(requireRole('borrower', 'admin'));
 router.post('/', loanController.createLoan);
 router.get('/', loanController.getLoans);
 router.get('/:id', loanController.getLoanById);
+router.get('/:id/status-history', loanController.getLoanStatusHistory);
 router.post('/:id/documents', loanController.uploadLoanDocument);
 
 export default router;

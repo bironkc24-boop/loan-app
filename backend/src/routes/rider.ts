@@ -9,6 +9,7 @@ router.use(requireRole('rider'));
 
 router.get('/assignments', riderController.getAssignments);
 router.put('/assignments/:id/status', riderController.updateAssignmentStatus);
+router.post('/assignments/:id/notes', riderController.addAssignmentNotes);
 router.put('/availability', riderController.updateAvailability);
 router.get('/metrics', riderController.getMetrics);
 

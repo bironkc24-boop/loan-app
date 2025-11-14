@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { supabase } from '../config/supabase';
 import { AppError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
+import { createNotification } from './notificationController';
 
 export const getAllLoans = async (req: AuthRequest, res: Response) => {
   try {
@@ -61,6 +62,25 @@ export const updateLoanStatus = async (req: AuthRequest, res: Response) => {
       throw new AppError('Failed to update loan status', 500);
     }
 
+    const statusMessages: Record<string, string> = {
+      reviewing: 'Your loan application is now under review',
+      approved: 'Congratulations! Your loan has been approved',
+      rejected: 'Your loan application has been reviewed',
+      disbursed: 'Your loan has been disbursed',
+      active: 'Your loan is now active',
+      closed: 'Your loan has been closed'
+    };
+
+    if (data.borrower_id && statusMessages[status]) {
+      await createNotification(
+        data.borrower_id,
+        'loan_status',
+        'Loan Status Update',
+        statusMessages[status],
+        id
+      );
+    }
+
     res.json({ message: 'Loan status updated', loan: data });
   } catch (error) {
     if (error instanceof AppError) {
@@ -96,6 +116,32 @@ export const assignRider = async (req: AuthRequest, res: Response) => {
         status: 'assigned',
       }
     ]);
+
+    const { data: riderData } = await supabase
+      .from('riders')
+      .select('user_id')
+      .eq('id', rider_id)
+      .single();
+
+    if (riderData?.user_id) {
+      await createNotification(
+        riderData.user_id,
+        'assignment',
+        'New Loan Assignment',
+        'You have been assigned a new loan verification task',
+        id
+      );
+    }
+
+    if (data.borrower_id) {
+      await createNotification(
+        data.borrower_id,
+        'assignment',
+        'Rider Assigned',
+        'A field agent has been assigned to verify your loan application',
+        id
+      );
+    }
 
     res.json({ message: 'Rider assigned successfully', loan: data });
   } catch (error) {
@@ -195,6 +241,84 @@ export const createRider = async (req: AuthRequest, res: Response) => {
     } else {
       console.error('Create rider error:', error);
       res.status(500).json({ error: 'Failed to create rider' });
+    }
+  }
+};
+
+export const updateRider = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { zone, status, max_assignments } = req.body;
+
+    const { data, error } = await supabase
+      .from('riders')
+      .update({ zone, status, max_assignments, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new AppError('Failed to update rider', 500);
+    }
+
+    res.json({ message: 'Rider updated successfully', rider: data });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Update rider error:', error);
+      res.status(500).json({ error: 'Failed to update rider' });
+    }
+  }
+};
+
+export const deactivateRider = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from('riders')
+      .update({ status: 'inactive', updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new AppError('Failed to deactivate rider', 500);
+    }
+
+    res.json({ message: 'Rider deactivated successfully', rider: data });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Deactivate rider error:', error);
+      res.status(500).json({ error: 'Failed to deactivate rider' });
+    }
+  }
+};
+
+export const getAllUsers = async (_req: AuthRequest, res: Response) => {
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select(`
+        *,
+        roles:user_roles(role:roles(name))
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new AppError('Failed to fetch users', 500);
+    }
+
+    res.json({ users });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Get users error:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
     }
   }
 };

@@ -13,7 +13,10 @@ router.post('/loans/:id/assign', adminController.assignRider);
 
 router.get('/riders', adminController.getAllRiders);
 router.post('/riders', adminController.createRider);
+router.put('/riders/:id', adminController.updateRider);
+router.delete('/riders/:id', adminController.deactivateRider);
 
+router.get('/users', adminController.getAllUsers);
 router.get('/metrics', adminController.getMetrics);
 
 export default router;

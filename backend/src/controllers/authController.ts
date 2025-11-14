@@ -173,3 +173,94 @@ export const logout = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Logout failed' });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new AppError('Email is required', 400);
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.FRONTEND_URL}/reset-password`,
+    });
+
+    if (error) {
+      throw new AppError('Failed to send password reset email', 500);
+    }
+
+    res.json({ message: 'Password reset email sent' });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ error: 'Failed to process password reset request' });
+    }
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { access_token, password } = req.body;
+
+    if (!access_token || !password) {
+      throw new AppError('Access token and new password are required', 400);
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(access_token);
+
+    if (userError || !user) {
+      throw new AppError('Invalid or expired token', 401);
+    }
+
+    const { error } = await supabase.auth.admin.updateUserById(
+      user.id,
+      { password }
+    );
+
+    if (error) {
+      throw new AppError('Failed to reset password', 500);
+    }
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Reset password error:', error);
+      res.status(500).json({ error: 'Failed to reset password' });
+    }
+  }
+};
+
+export const refreshToken = async (req: Request, res: Response) => {
+  try {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+      throw new AppError('Refresh token is required', 400);
+    }
+
+    const { data, error } = await supabase.auth.refreshSession({
+      refresh_token,
+    });
+
+    if (error) {
+      throw new AppError('Invalid refresh token', 401);
+    }
+
+    res.json({
+      message: 'Token refreshed successfully',
+      session: data.session,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Refresh token error:', error);
+      res.status(500).json({ error: 'Failed to refresh token' });
+    }
+  }
+};

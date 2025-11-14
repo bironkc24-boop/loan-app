@@ -77,6 +77,49 @@ export const updateAssignmentStatus = async (req: AuthRequest, res: Response) =>
   }
 };
 
+export const addAssignmentNotes = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    if (!notes) {
+      throw new AppError('Notes are required', 400);
+    }
+
+    const { data: currentAssignment } = await supabase
+      .from('rider_assignments')
+      .select('notes')
+      .eq('id', id)
+      .single();
+
+    const existingNotes = currentAssignment?.notes || '';
+    const timestamp = new Date().toISOString();
+    const updatedNotes = existingNotes 
+      ? `${existingNotes}\n\n[${timestamp}] ${notes}`
+      : `[${timestamp}] ${notes}`;
+
+    const { data, error } = await supabase
+      .from('rider_assignments')
+      .update({ notes: updatedNotes })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new AppError('Failed to add notes', 500);
+    }
+
+    res.json({ message: 'Notes added successfully', assignment: data });
+  } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Add assignment notes error:', error);
+      res.status(500).json({ error: 'Failed to add notes' });
+    }
+  }
+};
+
 export const updateAvailability = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
