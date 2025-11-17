@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { config } from './config';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import authRoutes from './routes/auth';
@@ -60,6 +61,18 @@ app.use('/api/loans', loanRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/rider', riderRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+if (config.nodeEnv === 'production') {
+  const publicPath = path.resolve(__dirname, '../public');
+  app.use(express.static(publicPath));
+  
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(publicPath, 'index.html'));
+  });
+}
 
 app.use(notFound);
 app.use(errorHandler);
