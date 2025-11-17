@@ -19,10 +19,11 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
+    res.status(err.statusCode).json({
       error: err.message,
       status: err.statusCode
     });
+    return;
   }
 
   console.error('Unexpected error:', err);

@@ -7,7 +7,8 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
     const { data: notifications, error } = await supabase
@@ -18,7 +19,8 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 
     if (error) {
       console.error('Error fetching notifications:', error);
-      return res.status(500).json({ error: 'Failed to fetch notifications' });
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+      return;
     }
 
     const unreadCount = notifications?.filter(n => !n.read).length || 0;
@@ -39,7 +41,8 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
     const { id } = req.params;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
     const { data, error } = await supabase
@@ -52,7 +55,8 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
 
     if (error) {
       console.error('Error marking notification as read:', error);
-      return res.status(500).json({ error: 'Failed to mark notification as read' });
+      res.status(500).json({ error: 'Failed to mark notification as read' });
+      return;
     }
 
     res.json({ notification: data });
@@ -67,7 +71,8 @@ export const markAllAsRead = async (req: AuthRequest, res: Response): Promise<vo
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
     }
 
     const { error } = await supabase
@@ -78,7 +83,8 @@ export const markAllAsRead = async (req: AuthRequest, res: Response): Promise<vo
 
     if (error) {
       console.error('Error marking all notifications as read:', error);
-      return res.status(500).json({ error: 'Failed to mark all as read' });
+      res.status(500).json({ error: 'Failed to mark all as read' });
+      return;
     }
 
     res.json({ message: 'All notifications marked as read' });

@@ -13,12 +13,13 @@ export const authenticate = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+      res.status(401).json({ error: 'Missing or invalid authorization header' });
+      return;
     }
 
     const token = authHeader.split(' ')[1];
@@ -26,7 +27,8 @@ export const authenticate = async (
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      res.status(401).json({ error: 'Invalid or expired token' });
+      return;
     }
 
     const { data: userRoles, error: rolesError } = await supabase
@@ -35,7 +37,8 @@ export const authenticate = async (
       .eq('user_id', user.id);
 
     if (rolesError) {
-      return res.status(500).json({ error: 'Failed to fetch user roles' });
+      res.status(500).json({ error: 'Failed to fetch user roles' });
+      return;
     }
 
     const roles = userRoles?.map((ur: any) => ur.roles.name) || [];
