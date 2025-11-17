@@ -1,35 +1,37 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider } from '../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function Layout() {
+function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <AuthProvider>
-      <Tabs
-        screenOptions={{
-          tabBarActiveTintColor: '#4F46E5',
-          tabBarInactiveTintColor: '#9CA3AF',
-          tabBarStyle: {
-            backgroundColor: '#FFFFFF',
-            borderTopWidth: 1,
-            borderTopColor: '#E5E7EB',
-            height: 60,
-            paddingBottom: 8,
-            paddingTop: 8,
-          },
-          tabBarLabelStyle: {
-            fontSize: 12,
-            fontWeight: '600',
-          },
-          headerStyle: {
-            backgroundColor: '#4F46E5',
-          },
-          headerTintColor: '#FFFFFF',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: '#4F46E5',
+        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom || 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        headerStyle: {
+          backgroundColor: '#4F46E5',
+        },
+        headerTintColor: '#FFFFFF',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
         <Tabs.Screen
           name="index"
           options={{
@@ -141,6 +143,13 @@ export default function Layout() {
           }}
         />
       </Tabs>
+  );
+}
+
+export default function Layout() {
+  return (
+    <AuthProvider>
+      <TabsLayout />
     </AuthProvider>
   );
 }
