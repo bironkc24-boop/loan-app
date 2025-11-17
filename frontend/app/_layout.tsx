@@ -34,6 +34,8 @@ export default function Layout() {
           name="index"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
@@ -94,36 +96,48 @@ export default function Layout() {
           name="login"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
           name="register"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
           name="admin"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
           name="rider"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
           name="terms"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
         <Tabs.Screen
           name="forgot-password"
           options={{
             href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' },
           }}
         />
       </Tabs>
