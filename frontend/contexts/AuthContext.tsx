@@ -104,32 +104,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
-    
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        password,
-        full_name: fullName,
-        phone,
-        accepted_terms: true,
-        terms_version: TERMS_VERSION,
-      }),
-    });
+    console.log('DEBUG: API_URL being used:', API_URL);
+    console.log('DEBUG: Full endpoint:', `${API_URL}/auth/register`);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
-    }
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          full_name: fullName,
+          phone,
+          accepted_terms: true,
+          terms_version: TERMS_VERSION,
+        }),
+      });
 
-    const data = await response.json();
-    
-    setSession(data.session);
-    if (data.user) {
-      await fetchUserProfile(data.user.id);
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response ok:', response.ok);
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.log('DEBUG: Error response:', error);
+        throw new Error(error.error || 'Registration failed');
+      }
+
+      const data = await response.json();
+      console.log('DEBUG: Success response:', data);
+
+      setSession(data.session);
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
+      }
+    } catch (error) {
+      console.log('DEBUG: Fetch error:', error);
+      throw error;
     }
   };
 

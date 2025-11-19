@@ -78,7 +78,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = typeof config.port === 'string' ? parseInt(config.port) : config.port;
-const HOST = 'localhost';
+const HOST = '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on ${HOST}:${PORT}`);
