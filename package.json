@@ -15,10 +15,23 @@
     "setup": "npm run install:all",
     "clean": "rm -rf node_modules backend/node_modules frontend/node_modules backend/dist"
   },
-  "keywords": ["loan", "fintech", "expo", "react-native", "express", "supabase"],
+  "keywords": [
+    "loan",
+    "fintech",
+    "expo",
+    "react-native",
+    "express",
+    "supabase"
+  ],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/pg": "^8.15.6",
+    "bcrypt": "^6.0.0",
+    "pg": "^8.16.3"
   }
 }
