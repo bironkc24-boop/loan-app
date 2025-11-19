@@ -80,7 +80,8 @@ export default function ApplyScreen() {
         amount: loanAmount,
         term_months: loanTerm,
         purpose,
-        loan_type: selectedProduct.id,
+        product_type: selectedProduct.type,
+        interest_rate: selectedProduct.interestRate,
         monthly_income: parseFloat(monthlyIncome),
         employment_status: employmentStatus,
       });

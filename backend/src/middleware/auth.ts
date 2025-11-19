@@ -15,33 +15,41 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log('DEBUG: Authenticate middleware called for path:', req.path);
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('DEBUG: Missing or invalid auth header');
       res.status(401).json({ error: 'Missing or invalid authorization header' });
       return;
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('DEBUG: Token present, length:', token.length);
 
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
+      console.log('DEBUG: Supabase getUser error:', error, 'user:', !!user);
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
 
+    console.log('DEBUG: User authenticated:', user.id, user.email);
+    console.log('DEBUG: Fetching roles for user:', user.id);
     const { data: userRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select('roles(name)')
       .eq('user_id', user.id);
 
     if (rolesError) {
+      console.error('DEBUG: Roles fetch error:', rolesError);
       res.status(500).json({ error: 'Failed to fetch user roles' });
       return;
     }
 
     const roles = userRoles?.map((ur: any) => ur.roles.name) || [];
+    console.log('DEBUG: Fetched roles:', roles);
 
     req.user = {
       id: user.id,
@@ -49,6 +57,7 @@ export const authenticate = async (
       roles
     };
 
+    console.log('DEBUG: Auth middleware success, proceeding to next');
     next();
   } catch (error) {
     console.error('Authentication error:', error);

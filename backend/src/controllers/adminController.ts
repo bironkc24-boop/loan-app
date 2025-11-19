@@ -180,6 +180,18 @@ export const createRider = async (req: AuthRequest, res: Response) => {
   try {
     const { email, password, full_name, phone, zone } = req.body;
 
+    if (!email || !password || !full_name || !zone) {
+      throw new AppError('Email, password, full name, and zone are required', 400);
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new AppError('Invalid email format', 400);
+    }
+
+    if (password.length < 8) {
+      throw new AppError('Password must be at least 8 characters long', 400);
+    }
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,

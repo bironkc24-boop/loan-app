@@ -5,20 +5,40 @@ import { AuthRequest } from '../middleware/auth';
 
 export const createLoan = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('DEBUG: createLoan called with body:', req.body);
     if (!req.user) {
       throw new AppError('Not authenticated', 401);
     }
 
     const { product_type, amount, term_months, purpose, interest_rate } = req.body;
 
+    console.log('DEBUG: Extracted fields:', { product_type, amount, term_months, purpose, interest_rate });
+
     if (!product_type || !amount || !term_months || !interest_rate) {
+      console.log('DEBUG: Validation failed - missing required fields');
       throw new AppError('Missing required fields', 400);
     }
 
-    const monthly_payment = (amount * (interest_rate / 100 / 12) * Math.pow(1 + (interest_rate / 100 / 12), term_months)) / 
-                           (Math.pow(1 + (interest_rate / 100 / 12), term_months) - 1);
-    
+    if (typeof amount !== 'number' || amount <= 0) {
+      console.log('DEBUG: Validation failed - invalid amount:', amount);
+      throw new AppError('Amount must be a positive number', 400);
+    }
+
+    if (typeof term_months !== 'number' || term_months <= 0) {
+      console.log('DEBUG: Validation failed - invalid term_months:', term_months);
+      throw new AppError('Term months must be a positive number', 400);
+    }
+
+    if (typeof interest_rate !== 'number' || interest_rate < 0) {
+      console.log('DEBUG: Validation failed - invalid interest_rate:', interest_rate);
+      throw new AppError('Interest rate must be a non-negative number', 400);
+    }
+
+    const monthly_payment = (amount * (interest_rate / 100 / 12) * Math.pow(1 + (interest_rate / 100 / 12), term_months)) /
+                            (Math.pow(1 + (interest_rate / 100 / 12), term_months) - 1);
+
     const total_repayment = monthly_payment * term_months;
+    console.log('DEBUG: Calculated monthly_payment:', monthly_payment, 'total_repayment:', total_repayment);
 
     const { data, error } = await supabase
       .from('loans')
@@ -57,6 +77,7 @@ export const createLoan = async (req: AuthRequest, res: Response) => {
       loan: data,
     });
   } catch (error) {
+    console.log('DEBUG: Create loan error type:', error instanceof AppError ? 'AppError' : typeof error, 'Message:', (error as Error)?.message || 'No message');
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {

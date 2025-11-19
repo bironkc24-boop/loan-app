@@ -37,10 +37,10 @@ yarn-error.*
 lerna-debug.log*
 
 # Environment variables - DO NOT COMMIT SECRETS
-# .env
-# .env*.local
-# .env.production
-# .env.development
+.env
+.env*.local
+.env.production
+.env.development
 
 # TypeScript
 *.tsbuildinfo

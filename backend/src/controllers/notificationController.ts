@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { supabase } from '../config/supabase';
+import { AppError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
 
 export const getNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -7,8 +8,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     const userId = req.user?.id;
 
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+      throw new AppError('Unauthorized', 401);
     }
 
     const { data: notifications, error } = await supabase
@@ -18,9 +18,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching notifications:', error);
-      res.status(500).json({ error: 'Failed to fetch notifications' });
-      return;
+      throw new AppError('Failed to fetch notifications', 500);
     }
 
     const unreadCount = notifications?.filter(n => !n.read).length || 0;
@@ -30,8 +28,12 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       unread_count: unreadCount
     });
   } catch (error) {
-    console.error('Get notifications error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Get notifications error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
@@ -41,8 +43,7 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
     const { id } = req.params;
 
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+      throw new AppError('Unauthorized', 401);
     }
 
     const { data, error } = await supabase
@@ -54,15 +55,17 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
       .single();
 
     if (error) {
-      console.error('Error marking notification as read:', error);
-      res.status(500).json({ error: 'Failed to mark notification as read' });
-      return;
+      throw new AppError('Failed to mark notification as read', 500);
     }
 
     res.json({ notification: data });
   } catch (error) {
-    console.error('Mark as read error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Mark as read error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
@@ -71,8 +74,7 @@ export const markAllAsRead = async (req: AuthRequest, res: Response): Promise<vo
     const userId = req.user?.id;
 
     if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+      throw new AppError('Unauthorized', 401);
     }
 
     const { error } = await supabase
@@ -82,15 +84,17 @@ export const markAllAsRead = async (req: AuthRequest, res: Response): Promise<vo
       .eq('read', false);
 
     if (error) {
-      console.error('Error marking all notifications as read:', error);
-      res.status(500).json({ error: 'Failed to mark all as read' });
-      return;
+      throw new AppError('Failed to mark all as read', 500);
     }
 
     res.json({ message: 'All notifications marked as read' });
   } catch (error) {
-    console.error('Mark all as read error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Mark all as read error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
