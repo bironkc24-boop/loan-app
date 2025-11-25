@@ -62,7 +62,7 @@ export default function SplashScreen() {
           <Ionicons name="wallet" size={80} color="#FFFFFF" />
         </Animated.View>
 
-        <Text style={styles.title}>QuickLoan</Text>
+        <Text style={styles.title}>SJDC</Text>
         <Text style={styles.subtitle}>Fast & Secure Loan Solutions</Text>
 
         <View style={styles.features}>
@@ -89,7 +89,7 @@ export default function SplashScreen() {
       </Animated.View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>Powered by QuickLoan Philippines</Text>
+        <Text style={styles.footerText}>Powered by SJDC Philippines</Text>
         <Text style={styles.footerSubtext}>Your trusted financial partner</Text>
       </View>
     </TouchableOpacity>

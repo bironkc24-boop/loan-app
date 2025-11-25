@@ -37,8 +37,8 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
@@ -50,8 +50,8 @@ export default function RegisterScreen() {
     setIsLoading(true);
     try {
       await signUp(email, password, fullName, phone);
-      Alert.alert('Success', 'Account created successfully!');
-      router.replace('/');
+      Alert.alert('Success', 'Account created successfully! Please check your email to confirm your account before logging in.');
+      router.replace('/login');
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'Could not create account');
     } finally {
@@ -63,7 +63,7 @@ export default function RegisterScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create Account</Text>
-        <Text style={styles.headerSubtitle}>Start your loan journey with QuickLoan</Text>
+        <Text style={styles.headerSubtitle}>Start your loan journey with SJDC</Text>
       </View>
 
       <View style={styles.form}>

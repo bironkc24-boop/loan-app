@@ -1,16 +1,28 @@
-import { supabase } from './supabase';
-
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+const ACCESS_TOKEN_KEY = '@access_token';
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  let token: string | null = null;
+
+  // For web environment, use localStorage
+  if (typeof window !== 'undefined' && window.localStorage) {
+    token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  } else {
+    // For React Native, import AsyncStorage dynamically
+    try {
+      const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+      token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+    } catch (error) {
+      console.warn('AsyncStorage not available:', error);
+    }
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
   return headers;

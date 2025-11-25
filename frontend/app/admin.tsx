@@ -28,7 +28,14 @@ interface Loan {
   created_at: string;
   users?: {
     full_name: string;
+    phone: string;
     email: string;
+  };
+  riders?: {
+    id: string;
+    users: {
+      full_name: string;
+    };
   };
 }
 
@@ -36,7 +43,7 @@ interface Rider {
   id: string;
   user_id: string;
   zone: string;
-  is_active: boolean;
+  status: string;
   max_assignments: number;
   current_assignments: number;
   users?: {
@@ -55,19 +62,33 @@ interface Metrics {
   active_riders: number;
 }
 
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  created_at: string;
+  roles?: { role: { name: string } }[];
+}
+
 export default function AdminDashboard() {
   const { user, hasRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<'loans' | 'riders' | 'metrics'>('loans');
+  const [activeTab, setActiveTab] = useState<'loans' | 'riders' | 'users' | 'metrics'>('loans');
   const [loans, setLoans] = useState<Loan[]>([]);
   const [riders, setRiders] = useState<Rider[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showRiderModal, setShowRiderModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [newRiderEmail, setNewRiderEmail] = useState('');
   const [newRiderZone, setNewRiderZone] = useState('');
+  const [loanFilter, setLoanFilter] = useState<string>('all');
+  const [riderFilter, setRiderFilter] = useState<string>('all');
 
   useEffect(() => {
     if (!hasRole('admin')) {
@@ -81,14 +102,18 @@ export default function AdminDashboard() {
   const loadData = async () => {
     try {
       if (activeTab === 'loans') {
-        const data = await api.get('/admin/loans');
+        const endpoint = loanFilter === 'all' ? '/admin/loans' : `/admin/loans?status=${loanFilter}`;
+        const data = await api.get(endpoint);
         setLoans(data.loans || []);
       } else if (activeTab === 'riders') {
         const data = await api.get('/admin/riders');
         setRiders(data.riders || []);
+      } else if (activeTab === 'users') {
+        const data = await api.get('/admin/users');
+        setUsers(data.users || []);
       } else if (activeTab === 'metrics') {
         const data = await api.get('/admin/metrics');
-        setMetrics(data);
+        setMetrics(data.metrics);
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to load data');
@@ -101,7 +126,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     setLoading(true);
     loadData();
-  }, [activeTab]);
+  }, [activeTab, loanFilter]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -127,12 +152,29 @@ export default function AdminDashboard() {
     }
 
     try {
-      await api.post('/admin/riders', {
+      const response = await api.post('/admin/riders', {
         email: newRiderEmail,
         zone: newRiderZone,
         max_assignments: 10,
       });
-      Alert.alert('Success', 'Rider created successfully');
+
+      // Show login credentials to admin
+      const credentials = response.login_credentials;
+      Alert.alert(
+        'Rider Created Successfully!',
+        `Email: ${credentials.email}\nPassword: ${credentials.password}\n\n${credentials.note}`,
+        [
+          {
+            text: 'Copy Details',
+            onPress: () => {
+              // You could implement copy to clipboard here
+              Alert.alert('Credentials', `Email: ${credentials.email}\nPassword: ${credentials.password}`);
+            }
+          },
+          { text: 'OK' }
+        ]
+      );
+
       setShowRiderModal(false);
       setNewRiderEmail('');
       setNewRiderZone('');
@@ -144,11 +186,23 @@ export default function AdminDashboard() {
 
   const toggleRiderStatus = async (riderId: string, isActive: boolean) => {
     try {
-      await api.put(`/admin/riders/${riderId}`, { is_active: !isActive });
+      await api.put(`/admin/riders/${riderId}`, { status: !isActive ? 'active' : 'inactive' });
       Alert.alert('Success', `Rider ${!isActive ? 'activated' : 'deactivated'} successfully`);
       loadData();
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to update rider status');
+    }
+  };
+
+  const assignRider = async (loanId: string, riderId: string) => {
+    try {
+      await api.post(`/admin/loans/${loanId}/assign`, { rider_id: riderId });
+      Alert.alert('Success', 'Rider assigned successfully');
+      setShowAssignModal(false);
+      setSelectedLoan(null);
+      loadData();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to assign rider');
     }
   };
 
@@ -159,7 +213,7 @@ export default function AdminDashboard() {
         return '#10B981';
       case 'rejected':
         return '#EF4444';
-      case 'under_review':
+      case 'reviewing':
         return '#F59E0B';
       default:
         return '#6B7280';
@@ -205,15 +259,57 @@ export default function AdminDashboard() {
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.actionButton}
-        onPress={() => {
-          setSelectedLoan(loan);
-          setShowStatusModal(true);
-        }}
-      >
-        <Text style={styles.actionButtonText}>Update Status</Text>
-      </TouchableOpacity>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.actionButtonHalf]}
+          onPress={() => {
+            setSelectedLoan(loan);
+            setShowStatusModal(true);
+          }}
+        >
+          <Text style={styles.actionButtonText}>Update Status</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.actionButtonHalf, styles.actionButtonSecondary]}
+          onPress={() => {
+            setSelectedLoan(loan);
+            setShowAssignModal(true);
+          }}
+        >
+          <Text style={styles.actionButtonTextSecondary}>Assign Rider</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderUserCard = (user: User) => (
+    <View key={user.id} style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>
+            {user.full_name || 'Unknown User'}
+          </Text>
+          <Text style={styles.cardSubtitle}>{user.email}</Text>
+        </View>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>
+            {user.roles?.[0]?.role?.name?.toUpperCase() || 'USER'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardBody}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Phone:</Text>
+          <Text style={styles.detailValue}>{user.phone || 'N/A'}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Joined:</Text>
+          <Text style={styles.detailValue}>
+            {new Date(user.created_at).toLocaleDateString()}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -229,11 +325,11 @@ export default function AdminDashboard() {
         <View
           style={[
             styles.statusBadge,
-            { backgroundColor: rider.is_active ? '#10B981' : '#9CA3AF' },
+            { backgroundColor: rider.status === 'active' ? '#10B981' : '#9CA3AF' },
           ]}
         >
           <Text style={styles.statusText}>
-            {rider.is_active ? 'ACTIVE' : 'INACTIVE'}
+            {rider.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
           </Text>
         </View>
       </View>
@@ -258,17 +354,17 @@ export default function AdminDashboard() {
       <TouchableOpacity
         style={[
           styles.actionButton,
-          !rider.is_active && styles.actionButtonSecondary,
+          rider.status !== 'active' && styles.actionButtonSecondary,
         ]}
-        onPress={() => toggleRiderStatus(rider.id, rider.is_active)}
+        onPress={() => toggleRiderStatus(rider.id, rider.status === 'active')}
       >
         <Text
           style={[
             styles.actionButtonText,
-            !rider.is_active && styles.actionButtonTextSecondary,
+            rider.status !== 'active' && styles.actionButtonTextSecondary,
           ]}
         >
-          {rider.is_active ? 'Deactivate' : 'Activate'}
+          {rider.status === 'active' ? 'Deactivate' : 'Activate'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -350,6 +446,16 @@ export default function AdminDashboard() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'users' && styles.tabActive]}
+          onPress={() => setActiveTab('users')}
+        >
+          <Text
+            style={[styles.tabText, activeTab === 'users' && styles.tabTextActive]}
+          >
+            Users
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'metrics' && styles.tabActive]}
           onPress={() => setActiveTab('metrics')}
         >
@@ -374,6 +480,30 @@ export default function AdminDashboard() {
         >
           {activeTab === 'loans' && (
             <>
+              <View style={styles.filterContainer}>
+                <Text style={styles.filterLabel}>Filter by Status:</Text>
+                <View style={styles.filterButtons}>
+                  {['all', 'pending', 'reviewing', 'approved', 'rejected', 'disbursed'].map((status) => (
+                    <TouchableOpacity
+                      key={status}
+                      style={[
+                        styles.filterButton,
+                        loanFilter === status && styles.filterButtonActive,
+                      ]}
+                      onPress={() => setLoanFilter(status)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterButtonText,
+                          loanFilter === status && styles.filterButtonTextActive,
+                        ]}
+                      >
+                        {status === 'all' ? 'All' : status.replace('_', ' ').toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
               {loans.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyText}>No loans found</Text>
@@ -403,6 +533,18 @@ export default function AdminDashboard() {
             </>
           )}
 
+          {activeTab === 'users' && (
+            <>
+              {users.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyText}>No users found</Text>
+                </View>
+              ) : (
+                users.map(renderUserCard)
+              )}
+            </>
+          )}
+
           {activeTab === 'metrics' && renderMetrics()}
         </ScrollView>
       )}
@@ -422,7 +564,7 @@ export default function AdminDashboard() {
 
             <TouchableOpacity
               style={styles.statusOption}
-              onPress={() => updateLoanStatus(selectedLoan!.id, 'under_review')}
+              onPress={() => updateLoanStatus(selectedLoan!.id, 'reviewing')}
             >
               <Text style={styles.statusOptionText}>Under Review</Text>
             </TouchableOpacity>
@@ -484,6 +626,46 @@ export default function AdminDashboard() {
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowRiderModal(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showAssignModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAssignModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Assign Rider</Text>
+            <Text style={styles.modalSubtitle}>
+              Select a rider for loan amount: {selectedLoan ? formatCurrency(selectedLoan.amount) : ''}
+            </Text>
+
+            {riders.filter(r => r.status === 'active').map((rider) => (
+              <TouchableOpacity
+                key={rider.id}
+                style={styles.riderOption}
+                onPress={() => assignRider(selectedLoan!.id, rider.id)}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.riderOptionName}>
+                    {rider.users?.full_name || 'Unknown Rider'}
+                  </Text>
+                  <Text style={styles.riderOptionDetails}>
+                    Zone: {rider.zone} | Assignments: {rider.current_assignments || 0}/{rider.max_assignments}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowAssignModal(false)}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
@@ -584,6 +766,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  roleBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  roleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   cardBody: {
     padding: 16,
   },
@@ -603,17 +796,24 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
   },
+  actionButtons: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
   actionButton: {
     backgroundColor: '#4F46E5',
     padding: 16,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonHalf: {
+    flex: 1,
   },
   actionButtonSecondary: {
     backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderLeftWidth: 1,
+    borderLeftColor: '#E5E7EB',
   },
   actionButtonText: {
     color: '#FFFFFF',
@@ -740,5 +940,65 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     fontWeight: '600',
+  },
+  riderOption: {
+    backgroundColor: '#F3F4F6',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  riderOptionName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  riderOptionDetails: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  filterContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterButton: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  filterButtonActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  filterButtonText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  filterButtonTextActive: {
+    color: '#FFFFFF',
   },
 });

@@ -6,33 +6,66 @@ import { createNotification } from './notificationController';
 
 export const getAllLoans = async (req: AuthRequest, res: Response) => {
   try {
-    const { status } = req.query;
+    console.log('DEBUG: getAllLoans called');
 
-    let query = supabase
+    // First, get all loans without joins
+    const { data: loans, error: loansError } = await supabase
       .from('loans')
-      .select(`
-        *,
-        borrower:users!loans_borrower_id_fkey(full_name, phone, email),
-        rider:riders(id, user:users(full_name))
-      `)
+      .select('*')
       .order('applied_at', { ascending: false });
 
-    if (status) {
-      query = query.eq('status', status);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
+    if (loansError) {
+      console.error('DEBUG: Loans query error:', loansError);
       throw new AppError('Failed to fetch loans', 500);
     }
 
-    res.json({ loans: data });
+    console.log('DEBUG: Found loans:', loans?.length || 0);
+
+    // If no loans, return empty array
+    if (!loans || loans.length === 0) {
+      return res.json({ loans: [] });
+    }
+
+    // Get borrower info separately (email is in auth.users)
+    const borrowerIds = [...new Set(loans.map(l => l.borrower_id))];
+    const { data: borrowers, error: borrowersError } = await supabase
+      .from('users')
+      .select('id, full_name, phone')
+      .in('id', borrowerIds);
+
+    // Get emails from auth.users
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    const emailMap = authUsers?.users?.reduce((map, user) => {
+      if (user.email) {
+        map[user.id] = user.email;
+      }
+      return map;
+    }, {} as Record<string, string>) || {};
+
+    if (borrowersError) {
+      console.error('DEBUG: Borrowers query error:', borrowersError);
+      // Continue without borrower info
+    }
+
+    // Combine the data
+    const loansWithBorrowers = loans.map(loan => {
+      const borrower = borrowers?.find(b => b.id === loan.borrower_id);
+      return {
+        ...loan,
+        users: borrower ? {
+          ...borrower,
+          email: emailMap[loan.borrower_id] || null
+        } : null
+      };
+    });
+
+    console.log('DEBUG: Returning loans with borrowers');
+    res.json({ loans: loansWithBorrowers });
   } catch (error) {
+    console.error('DEBUG: getAllLoans final error:', error);
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {
-      console.error('Get all loans error:', error);
       res.status(500).json({ error: 'Failed to fetch loans' });
     }
   }
@@ -40,6 +73,7 @@ export const getAllLoans = async (req: AuthRequest, res: Response) => {
 
 export const updateLoanStatus = async (req: AuthRequest, res: Response) => {
   try {
+    console.log('DEBUG: updateLoanStatus called for loan:', req.params.id, 'status:', req.body.status);
     const { id } = req.params;
     const { status, notes } = req.body;
 
@@ -59,8 +93,11 @@ export const updateLoanStatus = async (req: AuthRequest, res: Response) => {
       .single();
 
     if (error) {
+      console.error('DEBUG: Loan update error:', error);
       throw new AppError('Failed to update loan status', 500);
     }
+
+    console.log('DEBUG: Loan updated successfully');
 
     const statusMessages: Record<string, string> = {
       reviewing: 'Your loan application is now under review',
@@ -156,21 +193,66 @@ export const assignRider = async (req: AuthRequest, res: Response) => {
 
 export const getAllRiders = async (_req: AuthRequest, res: Response) => {
   try {
-    const { data, error } = await supabase
+    console.log('DEBUG: getAllRiders called');
+
+    // Get all riders
+    const { data: riders, error: ridersError } = await supabase
       .from('riders')
-      .select('*, user:users(full_name, phone, email)')
+      .select('*')
       .order('created_at', { ascending: false });
 
-    if (error) {
+    if (ridersError) {
+      console.error('DEBUG: Riders query error:', ridersError);
       throw new AppError('Failed to fetch riders', 500);
     }
 
-    res.json({ riders: data });
+    console.log('DEBUG: Found riders:', riders?.length || 0);
+
+    // If no riders, return empty array
+    if (!riders || riders.length === 0) {
+      return res.json({ riders: [] });
+    }
+
+    // Get user info separately
+    const userIds = [...new Set(riders.map(r => r.user_id).filter(id => id))];
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, full_name, phone')
+      .in('id', userIds);
+
+    // Get emails from auth.users
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    const emailMap = authUsers?.users?.reduce((map, user) => {
+      if (user.email) {
+        map[user.id] = user.email;
+      }
+      return map;
+    }, {} as Record<string, string>) || {};
+
+    if (usersError) {
+      console.error('DEBUG: Users query error:', usersError);
+      // Continue without user info
+    }
+
+    // Combine the data
+    const ridersWithUsers = riders.map(rider => {
+      const user = users?.find(u => u.id === rider.user_id);
+      return {
+        ...rider,
+        users: user ? {
+          ...user,
+          email: emailMap[rider.user_id || ''] || null
+        } : null
+      };
+    });
+
+    console.log('DEBUG: Returning riders with users');
+    res.json({ riders: ridersWithUsers });
   } catch (error) {
+    console.error('DEBUG: getAllRiders final error:', error);
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {
-      console.error('Get riders error:', error);
       res.status(500).json({ error: 'Failed to fetch riders' });
     }
   }
@@ -178,19 +260,22 @@ export const getAllRiders = async (_req: AuthRequest, res: Response) => {
 
 export const createRider = async (req: AuthRequest, res: Response) => {
   try {
-    const { email, password, full_name, phone, zone } = req.body;
+    console.log('DEBUG: createRider called with:', req.body);
+    const { email, zone, max_assignments = 10 } = req.body;
 
-    if (!email || !password || !full_name || !zone) {
-      throw new AppError('Email, password, full name, and zone are required', 400);
+    if (!email || !zone) {
+      throw new AppError('Email and zone are required', 400);
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new AppError('Invalid email format', 400);
     }
 
-    if (password.length < 8) {
-      throw new AppError('Password must be at least 8 characters long', 400);
-    }
+    // Generate a predictable password based on email (so admin can know it)
+    const basePassword = email.split('@')[0] + '123!';
+    const password = basePassword.length > 12 ? basePassword.substring(0, 12) + '!' : basePassword;
+    const full_name = email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+    const phone = null; // Optional field
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -237,6 +322,7 @@ export const createRider = async (req: AuthRequest, res: Response) => {
           user_id: authData.user.id,
           zone,
           status: 'active',
+          max_assignments,
         }
       ])
       .select()
@@ -246,7 +332,15 @@ export const createRider = async (req: AuthRequest, res: Response) => {
       throw new AppError('Failed to create rider profile', 500);
     }
 
-    res.status(201).json({ message: 'Rider created successfully', rider: riderData });
+    res.status(201).json({
+      message: 'Rider created successfully',
+      rider: riderData,
+      login_credentials: {
+        email: email,
+        password: password,
+        note: 'Please provide these credentials to the rider for login'
+      }
+    });
   } catch (error) {
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
@@ -312,24 +406,50 @@ export const deactivateRider = async (req: AuthRequest, res: Response) => {
 
 export const getAllUsers = async (_req: AuthRequest, res: Response) => {
   try {
-    const { data: users, error } = await supabase
+    console.log('DEBUG: getAllUsers called');
+
+    // Get users from our users table
+    const { data: users, error: usersError } = await supabase
       .from('users')
       .select(`
         *,
-        roles:user_roles(role:roles(name))
+        roles:user_roles!user_roles_user_id_fkey(role:roles(name))
       `)
       .order('created_at', { ascending: false });
 
-    if (error) {
+    if (usersError) {
+      console.error('DEBUG: Users query error:', usersError);
       throw new AppError('Failed to fetch users', 500);
     }
 
-    res.json({ users });
+    console.log('DEBUG: Found users:', users?.length || 0);
+
+    // Get emails from auth.users
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+    const emailMap = authUsers?.users?.reduce((map, user) => {
+      if (user.email) {
+        map[user.id] = user.email;
+      }
+      return map;
+    }, {} as Record<string, string>) || {};
+
+    if (authError) {
+      console.error('DEBUG: Auth users query error:', authError);
+    }
+
+    // Combine user data with emails
+    const usersWithEmails = users?.map(user => ({
+      ...user,
+      email: emailMap[user.id] || null
+    })) || [];
+
+    console.log('DEBUG: Returning users with emails');
+    res.json({ users: usersWithEmails });
   } catch (error) {
+    console.error('DEBUG: getAllUsers final error:', error);
     if (error instanceof AppError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {
-      console.error('Get users error:', error);
       res.status(500).json({ error: 'Failed to fetch users' });
     }
   }
@@ -337,21 +457,40 @@ export const getAllUsers = async (_req: AuthRequest, res: Response) => {
 
 export const getMetrics = async (_req: AuthRequest, res: Response) => {
   try {
-    const { data: loans } = await supabase.from('loans').select('status, amount');
-    const { data: riders } = await supabase.from('riders').select('status');
+    console.log('DEBUG: getMetrics called');
+
+    // Get loan counts by status
+    const { data: loans, error: loansError } = await supabase
+      .from('loans')
+      .select('status, amount');
+
+    if (loansError) {
+      console.error('DEBUG: Loans metrics error:', loansError);
+    }
+
+    // Get rider counts
+    const { data: riders, error: ridersError } = await supabase
+      .from('riders')
+      .select('status');
+
+    if (ridersError) {
+      console.error('DEBUG: Riders metrics error:', ridersError);
+    }
 
     const metrics = {
       total_loans: loans?.length || 0,
       pending_loans: loans?.filter(l => l.status === 'pending').length || 0,
       approved_loans: loans?.filter(l => l.status === 'approved').length || 0,
+      rejected_loans: loans?.filter(l => l.status === 'rejected').length || 0,
       total_disbursed: loans?.filter(l => l.status === 'disbursed')
-        .reduce((sum, l) => sum + Number(l.amount), 0) || 0,
+        .reduce((sum, l) => sum + Number(l.amount || 0), 0) || 0,
       active_riders: riders?.filter(r => r.status === 'active').length || 0,
     };
 
+    console.log('DEBUG: Metrics calculated:', metrics);
     res.json({ metrics });
   } catch (error) {
-    console.error('Get metrics error:', error);
+    console.error('DEBUG: Get metrics final error:', error);
     res.status(500).json({ error: 'Failed to fetch metrics' });
   }
 };

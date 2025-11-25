@@ -25,7 +25,7 @@ export const getAssignments = async (req: AuthRequest, res: Response) => {
         *,
         loan:loans(
           *,
-          borrower:users!loans_borrower_id_fkey(full_name, phone, email)
+          borrower:users!borrower_id(full_name, phone, email)
         )
       `)
       .eq('rider_id', rider.id)

@@ -67,7 +67,6 @@ export default function StatusScreen() {
         return '#10B981';
       case 'rejected':
         return '#EF4444';
-      case 'under_review':
       case 'reviewing':
         return '#F59E0B';
       default:
@@ -82,7 +81,6 @@ export default function StatusScreen() {
         return '✓';
       case 'rejected':
         return '✕';
-      case 'under_review':
       case 'reviewing':
         return '⟳';
       default:
@@ -153,7 +151,7 @@ export default function StatusScreen() {
         </View>
       )}
 
-      {item.status === 'under_review' && (
+      {item.status === 'reviewing' && (
         <View style={[styles.cardFooter, { backgroundColor: '#FEF3C7' }]}>
           <Text style={[styles.footerText, { color: '#92400E' }]}>
             📋 Under review - We may contact you for additional information

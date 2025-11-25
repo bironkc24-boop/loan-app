@@ -41,7 +41,7 @@ export default function LoginScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Welcome Back</Text>
-        <Text style={styles.headerSubtitle}>Sign in to continue to QuickLoan</Text>
+        <Text style={styles.headerSubtitle}>Sign in to continue to SJDC</Text>
       </View>
 
       <View style={styles.form}>

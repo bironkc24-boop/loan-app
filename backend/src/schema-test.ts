@@ -1,4 +1,11 @@
 import { supabase } from './config/supabase';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+console.log('🔧 Test script environment:');
+console.log(`SUPABASE_URL: ${process.env.SUPABASE_URL ? 'Set' : 'Not set'}`);
+console.log(`SUPABASE_SERVICE_KEY: ${process.env.SUPABASE_SERVICE_KEY ? 'Set' : 'Not set'}`);
 
 interface TestResult {
   name: string;

@@ -1,8 +1,8 @@
-# QuickLoan - Loan Management System
+# SJDC - Loan Management System
 
 ## Overview
 
-QuickLoan is a full-stack loan management platform designed for the Philippine market. The system enables borrowers to apply for and manage loans while providing administrative and field verification capabilities through role-based access control. The application supports three user roles: Borrowers who apply for loans, Admins who manage the entire system, and Riders who perform field verification tasks.
+SJDC is a full-stack loan management platform designed for the Philippine market. The system enables borrowers to apply for and manage loans while providing administrative and field verification capabilities through role-based access control. The application supports three user roles: Borrowers who apply for loans, Admins who manage the entire system, and Riders who perform field verification tasks.
 
 The platform offers three loan products: Personal Loans (8.5% APR, up to ₱500,000), Business Loans (6.5% APR, up to ₱5,000,000), and Education Loans (4.5% APR, up to ₱1,000,000). It includes features such as real-time loan calculators, document upload capabilities, status tracking, and notification systems.
 

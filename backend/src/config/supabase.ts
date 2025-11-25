@@ -32,13 +32,17 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 // Test database connection and schema
 (async () => {
   try {
-    const { error } = await supabase.from('roles').select('count').limit(1);
+    console.log('🔍 Testing database connection...');
+    const { data, error } = await supabase.from('roles').select('count').limit(1);
     if (error) {
       console.error('❌ DATABASE CONNECTION ERROR:', error.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       console.error('This may indicate the schema has not been applied to your Supabase database.');
       console.error('Please run the schema.sql file in your Supabase SQL editor.');
+      console.error('Or check if SUPABASE_SERVICE_KEY is correct.');
     } else {
       console.log('✅ Database connection successful, schema appears to be applied.');
+      console.log('Test query result:', data);
     }
   } catch (err) {
     console.error('❌ Unexpected error testing database connection:', err);

@@ -39,7 +39,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Welcome to QuickLoan</Text>
+        <Text style={styles.headerTitle}>Welcome to SJDC</Text>
         <Text style={styles.headerSubtitle}>
           Find the perfect loan for your needs
         </Text>

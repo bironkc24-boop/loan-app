@@ -1,4 +1,4 @@
-    -- QuickLoan Database Schema for Supabase
+    -- SJDC Database Schema for Supabase
     -- This schema supports multi-role loan management system
 
     -- Enable UUID extension
@@ -232,6 +232,11 @@
         TO authenticated
         USING (true);
 
+    CREATE POLICY "Service role can view roles"
+        ON roles FOR SELECT
+        TO service_role
+        USING (true);
+
     -- Users table policies
     CREATE POLICY "Users can view their own profile"
         ON users FOR SELECT
@@ -258,6 +263,11 @@
         ON users FOR INSERT
         TO authenticated
         WITH CHECK (auth.uid() = id);
+
+    CREATE POLICY "Service role can view all users"
+        ON users FOR SELECT
+        TO service_role
+        USING (true);
 
     -- User roles policies
     CREATE POLICY "Users can view their own roles"
@@ -303,6 +313,11 @@
         TO authenticated
         WITH CHECK (auth.uid() = user_id);
 
+    CREATE POLICY "Service role can view all borrower profiles"
+        ON borrower_profiles FOR SELECT
+        TO service_role
+        USING (true);
+
     -- Riders policies
     CREATE POLICY "Riders can view their own profile"
         ON riders FOR SELECT
@@ -319,6 +334,11 @@
         TO authenticated
         USING (has_role('admin'))
         WITH CHECK (has_role('admin'));
+
+    CREATE POLICY "Service role can view all riders"
+        ON riders FOR SELECT
+        TO service_role
+        USING (true);
 
     -- Loans policies
     CREATE POLICY "Borrowers can view their own loans"
@@ -399,6 +419,11 @@
             )
         );
 
+    CREATE POLICY "Service role can view all loan documents"
+        ON loan_documents FOR SELECT
+        TO service_role
+        USING (true);
+
     -- Loan status history policies
     CREATE POLICY "Users can view their loan history"
         ON loan_status_history FOR SELECT
@@ -415,6 +440,11 @@
         ON loan_status_history FOR INSERT
         TO service_role
         WITH CHECK (true);
+
+    CREATE POLICY "Service role can view all loan status history"
+        ON loan_status_history FOR SELECT
+        TO service_role
+        USING (true);
 
     -- Rider assignments policies
     CREATE POLICY "Riders can view their assignments"
@@ -466,6 +496,11 @@
         ON notifications FOR INSERT
         TO service_role
         WITH CHECK (true);
+
+    CREATE POLICY "Service role can view all notifications"
+        ON notifications FOR SELECT
+        TO service_role
+        USING (true);
 
     -- =============================================
     -- FUNCTIONS AND TRIGGERS

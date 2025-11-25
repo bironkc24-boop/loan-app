@@ -2,7 +2,7 @@ export const PRIVACY_POLICY = `PRIVACY POLICY
 
 Last Updated: November 14, 2025
 
-QuickLoan ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our loan application platform.
+SJDC ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our loan application platform.
 
 1. INFORMATION WE COLLECT
 
@@ -192,7 +192,7 @@ If you believe your privacy rights have been violated, you may file a complaint 
 
 15. CONSENT
 
-By using QuickLoan, you consent to:
+By using SJDC, you consent to:
 - Collection of your information as described
 - Processing of your data for stated purposes
 - Sharing of information as specified

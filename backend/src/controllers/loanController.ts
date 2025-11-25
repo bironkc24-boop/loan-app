@@ -10,7 +10,7 @@ export const createLoan = async (req: AuthRequest, res: Response) => {
       throw new AppError('Not authenticated', 401);
     }
 
-    const { product_type, amount, term_months, purpose, interest_rate } = req.body;
+    const { product_type, amount, term_months, purpose, interest_rate, monthly_income, employment_status } = req.body;
 
     console.log('DEBUG: Extracted fields:', { product_type, amount, term_months, purpose, interest_rate });
 
@@ -60,6 +60,19 @@ export const createLoan = async (req: AuthRequest, res: Response) => {
 
     if (error) {
       throw new AppError('Failed to create loan application', 500);
+    }
+
+    // Update or create borrower profile
+    if (monthly_income || employment_status) {
+      await supabase
+        .from('borrower_profiles')
+        .upsert([
+          {
+            user_id: req.user.id,
+            employment_status,
+            monthly_income,
+          }
+        ], { onConflict: 'user_id' });
     }
 
     await supabase.from('notifications').insert([

@@ -47,7 +47,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.guestContainer}>
           <Ionicons name="person-circle-outline" size={100} color="#9CA3AF" />
-          <Text style={styles.guestTitle}>Welcome to QuickLoan</Text>
+          <Text style={styles.guestTitle}>Welcome to SJDC</Text>
           <Text style={styles.guestSubtitle}>
             Sign in to manage your loans and track your applications
           </Text>
@@ -180,7 +180,7 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>QuickLoan v1.0.0</Text>
+        <Text style={styles.footerText}>SJDC v1.0.0</Text>
       </View>
     </ScrollView>
   );

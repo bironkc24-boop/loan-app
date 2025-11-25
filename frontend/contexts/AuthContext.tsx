@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { TERMS_VERSION } from '../constants/termsOfService';
+
+const ACCESS_TOKEN_KEY = '@access_token';
+const USER_KEY = '@user';
 
 interface UserProfile extends User {
   roles?: string[];
@@ -35,20 +39,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('DEBUG: AuthContext - Initializing auth state');
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('DEBUG: AuthContext - Initial session:', session?.user?.id);
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        console.log('DEBUG: AuthContext - No initial session, setting loading false');
-        setIsLoading(false);
-      }
-    });
+    // Load token and user from storage
+    const loadStoredData = async () => {
+      let token: string | null = null;
+      let userData: string | null = null;
 
+      if (typeof window !== 'undefined' && window.localStorage) {
+        // Web environment
+        token = localStorage.getItem(ACCESS_TOKEN_KEY);
+        userData = localStorage.getItem(USER_KEY);
+      } else {
+        // React Native environment
+        try {
+          const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+          token = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+          userData = await AsyncStorage.getItem(USER_KEY);
+        } catch (error) {
+          console.warn('Storage not available:', error);
+        }
+      }
+
+      console.log('DEBUG: AuthContext - Loaded token from storage:', !!token);
+      console.log('DEBUG: AuthContext - Loaded user from storage:', !!userData);
+      setAccessToken(token);
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+      setIsLoading(false);
+    };
+
+    loadStoredData();
+
+    // Keep the Supabase listener for completeness, but primary auth is via backend
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -59,7 +85,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.log('DEBUG: AuthContext - No session, clearing user');
         setUser(null);
-        setIsLoading(false);
+        setAccessToken(null);
+        // Clear storage synchronously
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.removeItem(ACCESS_TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+        }
+        // For React Native, we'll handle this in signOut
       }
     });
 
@@ -132,7 +164,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('DEBUG: AuthContext - Setting session after sign in:', data.session?.user?.id);
       setSession(data.session);
+      if (data.session?.access_token) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(ACCESS_TOKEN_KEY, data.session.access_token);
+        } else {
+          try {
+            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+            await AsyncStorage.setItem(ACCESS_TOKEN_KEY, data.session.access_token);
+          } catch (error) {
+            console.warn('Storage not available:', error);
+          }
+        }
+        setAccessToken(data.session.access_token);
+      }
       if (data.user) {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        } else {
+          try {
+            const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+            await AsyncStorage.setItem(USER_KEY, JSON.stringify(data.user));
+          } catch (error) {
+            console.warn('Storage not available:', error);
+          }
+        }
         setUser(data.user as UserProfile);
         setIsLoading(false);
       }
@@ -176,11 +231,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
       console.log('DEBUG: AuthContext - Sign up success response:', data);
 
-      console.log('DEBUG: AuthContext - Setting session after sign up:', data.session?.user?.id);
-      setSession(data.session);
-      if (data.user) {
-        await fetchUserProfile(data.user.id);
-      }
+      // Do not set session after signup - user needs to confirm email first
+      // setSession(data.session);
+      // if (data.user) {
+      //   await fetchUserProfile(data.user.id);
+      // }
     } catch (error) {
       console.log('DEBUG: AuthContext - Sign up fetch error:', error);
       throw error;
@@ -189,8 +244,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+
+    // Clear storage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    } else {
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, USER_KEY]);
+      } catch (error) {
+        console.warn('Storage not available:', error);
+      }
+    }
+
     setSession(null);
     setUser(null);
+    setAccessToken(null);
   };
 
   const hasRole = (role: string) => {

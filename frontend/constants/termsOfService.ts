@@ -7,7 +7,7 @@ Version: ${TERMS_VERSION}
 
 AGREEMENT TO TERMS
 
-By accessing or using QuickLoan's services, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.
+By accessing or using SJDC's services, you agree to be bound by these Terms of Service. If you disagree with any part of these terms, you may not access our services.
 
 1. ELIGIBILITY
 
@@ -18,7 +18,7 @@ By accessing or using QuickLoan's services, you agree to be bound by these Terms
 
 2. SERVICES PROVIDED
 
-2.1 QuickLoan provides a platform to apply for and manage personal, business, and education loans.
+2.1 SJDC provides a platform to apply for and manage personal, business, and education loans.
 2.2 We reserve the right to approve or reject any loan application at our sole discretion.
 2.3 Services are provided "as is" without warranties of any kind.
 
@@ -58,7 +58,7 @@ You agree not to:
 
 8. INTELLECTUAL PROPERTY
 
-8.1 All content and materials on QuickLoan are our property.
+8.1 All content and materials on SJDC are our property.
 8.2 You may not reproduce, distribute, or create derivative works without permission.
 
 9. PRIVACY AND DATA
@@ -69,7 +69,7 @@ You agree not to:
 
 10. LIMITATION OF LIABILITY
 
-10.1 QuickLoan is not liable for indirect, incidental, or consequential damages.
+10.1 SJDC is not liable for indirect, incidental, or consequential damages.
 10.2 Our liability is limited to the amount paid by you for our services.
 10.3 We are not responsible for third-party services or links.
 
@@ -99,7 +99,7 @@ Address: Manila, Philippines
 
 15. ENTIRE AGREEMENT
 
-These Terms of Service constitute the entire agreement between you and QuickLoan regarding the use of our services.
+These Terms of Service constitute the entire agreement between you and SJDC regarding the use of our services.
 
 BY CLICKING "I ACCEPT" OR USING OUR SERVICES, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.
 `;

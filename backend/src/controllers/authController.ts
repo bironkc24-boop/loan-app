@@ -134,8 +134,19 @@ export const login = async (req: Request, res: Response) => {
       console.log('DEBUG: Login - validation failed: invalid email format');
       throw new AppError('Invalid email format', 400);
     }
-    console.log('DEBUG: Login - validation passed, attempting signInWithPassword');
+    console.log('DEBUG: Login - validation passed, checking email confirmation');
 
+    // Check if user exists and is confirmed
+    const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers();
+    console.log('DEBUG: Login - listUsers result - users count:', usersData?.users?.length, 'error:', usersError);
+    const user = usersData?.users?.find(u => u.email === email);
+
+    if (!usersError && user && !user.email_confirmed_at) {
+      console.log('DEBUG: Login - email not confirmed');
+      throw new AppError('Please confirm your email before logging in. Check your email for the confirmation link.', 401);
+    }
+
+    console.log('DEBUG: Login - attempting signInWithPassword');
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
